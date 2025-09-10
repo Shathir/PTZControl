@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.outdu.ptzcontrol.ui.components.CameraStreamLayout
+import com.outdu.ptzcontrol.ui.components.DPadLayout
 
 @Composable
 fun MainScreen(
@@ -25,7 +26,7 @@ fun MainScreen(
             modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.5f)
-                .background(Color.Red),
+                .background(Color.Transparent),
             contentAlignment = Alignment.Center
         )
         {
@@ -37,11 +38,11 @@ fun MainScreen(
             modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .background(Color.Green),
+                .background(Color.White),
             contentAlignment = Alignment.Center
         )
         {
-
+            DPadLayout()
         }
 
     }
