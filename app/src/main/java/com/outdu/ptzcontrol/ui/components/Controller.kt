@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -26,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -43,7 +46,7 @@ fun DPadController(
 ) {
     val sectorColor = Color(0xFFE8E8E8)
     val borderColor = Color(0xFFD0D0D0)
-    
+
     Box(
         modifier = Modifier.size(size),
         contentAlignment = Alignment.Center
@@ -61,16 +64,16 @@ fun DPadController(
                         val distance = sqrt(dx * dx + dy * dy)
                         val outerRadius = this.size.width / 2f
                         val innerRadius = outerRadius * 0.4f
-                        
+
                         // Check if tap is within the ring area
                         if (distance >= innerRadius && distance <= outerRadius) {
                             val angle = atan2(dy, dx) * 180 / PI
                             val normalizedAngle = if (angle < 0) angle + 360 else angle
-                            
+
                             val gapDegrees = 8f
                             val sectorDegrees = 90f - gapDegrees
                             val halfSector = sectorDegrees / 2
-                            
+
                             // Check which sector was tapped based on the new positions
                             when {
                                 // Up sector: 270° ± halfSector
@@ -92,7 +95,7 @@ fun DPadController(
             val centerY = canvasSize / 2
             val outerRadius = canvasSize / 2
             val innerRadius = outerRadius * 0.4f
-            
+
             // Function to draw a sector
             fun DrawScope.drawSector(startAngle: Float, sweepAngle: Float) {
                 val path = Path().apply {
@@ -108,14 +111,14 @@ fun DPadController(
                         sweepAngleDegrees = sweepAngle,
                         forceMoveTo = false
                     )
-                    
+
                     // Line to inner arc
                     val endAngleRad = (startAngle + sweepAngle) * PI / 180
                     lineTo(
                         centerX + innerRadius * cos(endAngleRad).toFloat(),
                         centerY + innerRadius * sin(endAngleRad).toFloat()
                     )
-                    
+
                     // Inner arc (reverse direction)
                     arcTo(
                         rect = Rect(
@@ -128,16 +131,20 @@ fun DPadController(
                         sweepAngleDegrees = -sweepAngle,
                         forceMoveTo = false
                     )
-                    
+
                     close()
                 }
-                
+
                 // Draw filled sector
                 drawPath(path, color = Color.White)
                 // Draw border
-                drawPath(path, color = borderColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx()))
+                drawPath(
+                    path,
+                    color = borderColor,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+                )
             }
-            
+
             // Draw the four sectors (full 90° each, no gaps)
             // Up sector (270°)
             drawSector(225f, 90f)
@@ -148,7 +155,7 @@ fun DPadController(
             // Left sector (180°)
             drawSector(135f, 90f)
         }
-        
+
         // Overlay icons on each sector
         // Up arrow
         Icon(
@@ -159,7 +166,7 @@ fun DPadController(
                 .offset(y = (-size * 0.33f))
                 .size(32.dp)
         )
-        
+
         // Down arrow
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,
@@ -169,7 +176,7 @@ fun DPadController(
                 .offset(y = (size * 0.33f))
                 .size(32.dp)
         )
-        
+
         // Left arrow
         Icon(
             imageVector = Icons.Default.KeyboardArrowLeft,
@@ -179,7 +186,7 @@ fun DPadController(
                 .offset(x = (-size * 0.33f))
                 .size(32.dp)
         )
-        
+
         // Right arrow
         Icon(
             imageVector = Icons.Default.KeyboardArrowRight,
@@ -189,7 +196,7 @@ fun DPadController(
                 .offset(x = (size * 0.33f))
                 .size(32.dp)
         )
-        
+
         // Center circle with text
         Box(
             modifier = Modifier
@@ -211,13 +218,81 @@ fun DPadController(
     }
 }
 
+@Composable
+fun ConfigurationControlPanel() {
+    Row(
+        modifier = Modifier
+            .fillMaxHeight()
+            .padding(48.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .width(190.dp)
+                .height(48.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF2A2A2A))
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFF2A2A2A),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .clickable { println("Button 1 pressed") },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Save Preset",
+                style = TextStyle(
+                    color = Color(0xFFFFFFFF),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight(500),
+                    fontFamily = FontFamily.SansSerif
+                )
+            )
+        }
+        Box(
+            modifier = Modifier
+                .width(170.dp)
+                .height(48.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFF737373),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .background(Color.White)
+                .clickable { println("Button 2 pressed") },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Delete",
+                style = TextStyle(
+                    color = Color(0xFF737373),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight(500),
+                    fontFamily = FontFamily.SansSerif
+                )
+            )
+        }
+    }
+}
 
 @Composable
 fun DPadLayout() {
-    DPadController(
-        onUp = { println("Up pressed") },
-        onDown = { println("Down pressed") },
-        onLeft = { println("Left pressed") },
-        onRight = { println("Right pressed") }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
     )
+    {
+        DPadController(
+            onUp = { println("Up pressed") },
+            onDown = { println("Down pressed") },
+            onLeft = { println("Left pressed") },
+            onRight = { println("Right pressed") }
+        )
+
+        ConfigurationControlPanel()
+    }
 }
