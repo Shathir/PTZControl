@@ -11,6 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +28,9 @@ import com.outdu.ptzcontrol.ui.components.PresetRow
 fun MainScreen(
     modifier: Modifier = Modifier
 ) {
+    // State to trigger preset operations
+    var savePresetTrigger by remember { mutableIntStateOf(0) }
+    var deletePresetTrigger by remember { mutableIntStateOf(0) }
 
     // Column to fill the complete screen in a vertical stack.
     Column(
@@ -51,7 +58,10 @@ fun MainScreen(
                 .background(Color.Transparent)
         )
         {
-            PresetRow()
+            PresetRow(
+                savePresetTrigger = savePresetTrigger,
+                deletePresetTrigger = deletePresetTrigger
+            )
         }
 
         // Top half screen for showing stream
@@ -75,7 +85,14 @@ fun MainScreen(
             contentAlignment = Alignment.Center
         )
         {
-            DPadLayout()
+            DPadLayout(
+                onSavePreset = { 
+                    savePresetTrigger += 1 
+                },
+                onDeletePreset = {
+                    deletePresetTrigger += 1
+                }
+            )
         }
 
     }
