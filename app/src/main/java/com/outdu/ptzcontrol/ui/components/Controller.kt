@@ -38,6 +38,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.*
+import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import com.outdu.ptzcontrol.client.PTZClient
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun DPadController(
@@ -295,6 +301,37 @@ fun DPadLayout(
     onSavePreset: (() -> Unit)? = null,
     onDeletePreset: (() -> Unit)? = null
 ) {
+    val TAG = "DPad Layout"
+    val coroutineScope = rememberCoroutineScope()
+    val ptzClient = remember { PTZClient() }
+
+    // Initialize PTZ client
+    LaunchedEffect(Unit) {
+        try {
+            ptzClient.init()
+            Log.i(TAG, "PTZ client initialized for movement control")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize PTZ client", e)
+        }
+    }
+
+    // Function to handle movement commands
+    fun handleMovement(direction: String) {
+        coroutineScope.launch {
+            try {
+                Log.i(TAG, "$direction movement initiated")
+                val success = ptzClient.controlMovement(direction, 2)
+                if (success) {
+                    Log.i(TAG, "$direction movement completed successfully")
+                } else {
+                    Log.w(TAG, "$direction movement failed")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during $direction movement", e)
+            }
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -302,10 +339,22 @@ fun DPadLayout(
     )
     {
         DPadController(
-            onUp = { println("Up pressed") },
-            onDown = { println("Down pressed") },
-            onLeft = { println("Left pressed") },
-            onRight = { println("Right pressed") }
+            onUp = { 
+                println("Up pressed")
+                handleMovement("up")
+            },
+            onDown = { 
+                println("Down pressed")
+                handleMovement("down")
+            },
+            onLeft = { 
+                println("Left pressed")
+                handleMovement("left")
+            },
+            onRight = { 
+                println("Right pressed")
+                handleMovement("right")
+            }
         )
 
         ConfigurationControlPanel(

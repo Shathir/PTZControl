@@ -58,6 +58,17 @@ class PTZClient {
         val message: String? = null
     )
 
+    @Serializable
+    data class ControlMovementRequest(
+        val direction: String,
+        val time: Int = 2
+    )
+
+    @Serializable
+    data class ControlMovementResponse(
+        val message: String? = null
+    )
+
     fun init() {
         if (httpClient != null) {
             Log.i(TAG, "HTTP client already initialized")
@@ -170,6 +181,38 @@ class PTZClient {
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting preset", e)
             Pair(false, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun controlMovement(direction: String, time: Int = 2): Boolean {
+        val client = httpClient ?: throw IllegalStateException("Client not initialized")
+
+        val url = "$baseUrl/controlMovement"
+        val request = ControlMovementRequest(direction = direction, time = time)
+
+        return try {
+            Log.d(TAG, "Controlling movement: Direction=$direction, Time=${time}s")
+            
+            val response = client.post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+            val responseText = response.bodyAsText()
+            Log.d(TAG, "Control movement response: $responseText")
+
+            if (response.status.value == 200) {
+                Log.i(TAG, "Successfully sent movement command: $direction for ${time}s")
+                true
+            } else {
+                val parsed = Json.decodeFromString<ControlMovementResponse>(responseText)
+                Log.w(TAG, "Failed to control movement: ${parsed.message}")
+                false
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error controlling movement", e)
+            false
         }
     }
 }

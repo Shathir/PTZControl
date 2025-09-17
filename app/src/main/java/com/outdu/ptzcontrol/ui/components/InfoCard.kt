@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.sp
 import com.outdu.ptzcontrol.R
 
 @Composable
-fun InfoCard() {
+fun InfoCard(
+    onReloadPresets: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxSize(),
@@ -43,23 +45,50 @@ fun InfoCard() {
             )
         )
 
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.Black)
-                .clickable {
-                    println("Play Button Pressed")
-                },
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         )
         {
-            Icon(
-                painter = painterResource(id = R.drawable.play),
-                contentDescription = "Play Button",
-                tint = Color.White,
-                modifier = Modifier.size(16.dp)
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Black)
+                    .clickable {
+                        println("Reload Button Pressed")
+                        onReloadPresets?.invoke()
+                    },
+                contentAlignment = Alignment.Center
             )
+            {
+                Icon(
+                    painter = painterResource(id = R.drawable.reload),
+                    contentDescription = "Reload Button",
+                    tint = Color.White,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Black)
+                    .clickable {
+                        println("Play Button Pressed")
+                    },
+                contentAlignment = Alignment.Center
+            )
+            {
+                Icon(
+                    painter = painterResource(id = R.drawable.play),
+                    contentDescription = "Play Button",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
     }
 }

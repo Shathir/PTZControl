@@ -147,7 +147,8 @@ fun ErrorDialog(
 @Composable
 fun PresetRow(
     savePresetTrigger: Int = 0,
-    deletePresetTrigger: Int = 0
+    deletePresetTrigger: Int = 0,
+    reloadPresetsTrigger: Int = 0
 ){
 
     val TAG = "Preset Row"
@@ -168,17 +169,23 @@ fun PresetRow(
     var errorMessage by remember { mutableStateOf("") }
     var presetToDelete by remember { mutableStateOf<Pair<Int, String>?>(null) }
 
-    LaunchedEffect(Unit) {
+    // Function to load/reload presets
+    suspend fun loadPresets() {
         try {
             ptzClient.init()
-            presets = ptzClient.fetchPresets()
-            tempPresets = presets
+            val fetchedPresets = ptzClient.fetchPresets()
+            presets = fetchedPresets
+            tempPresets = fetchedPresets
             Log.i(TAG, "Loaded ${presets.size} presets: ${presets.map { it.name }}")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch presets", e)
             presets = emptyList()
             tempPresets = emptyList()
         }
+    }
+
+    LaunchedEffect(Unit) {
+        loadPresets()
     }
 
     // Combined list of presets (saved + temporary)
@@ -230,6 +237,16 @@ fun PresetRow(
         if (deletePresetTrigger > 0) {
             Log.d(TAG, "Delete preset triggered: $deletePresetTrigger")
             deleteSelectedPreset()
+        }
+    }
+
+    // Handle reload presets request from parent
+    LaunchedEffect(reloadPresetsTrigger) {
+        if (reloadPresetsTrigger > 0) {
+            Log.d(TAG, "Reload presets triggered: $reloadPresetsTrigger")
+            loadPresets()
+            // Reset selection to first preset if available
+            isSelected = if (tempPresets.isNotEmpty()) 0 else 0
         }
     }
 

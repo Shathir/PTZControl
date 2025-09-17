@@ -31,6 +31,7 @@ fun MainScreen(
     // State to trigger preset operations
     var savePresetTrigger by remember { mutableIntStateOf(0) }
     var deletePresetTrigger by remember { mutableIntStateOf(0) }
+    var reloadPresetsTrigger by remember { mutableIntStateOf(0) }
 
     // Column to fill the complete screen in a vertical stack.
     Column(
@@ -49,7 +50,9 @@ fun MainScreen(
                 .background(Color.Transparent),
         )
         {
-            InfoCard()
+            InfoCard(onReloadPresets = {
+                reloadPresetsTrigger += 1
+            })
         }
 
         Box(
@@ -60,7 +63,8 @@ fun MainScreen(
         {
             PresetRow(
                 savePresetTrigger = savePresetTrigger,
-                deletePresetTrigger = deletePresetTrigger
+                deletePresetTrigger = deletePresetTrigger,
+                reloadPresetsTrigger = reloadPresetsTrigger
             )
         }
 
