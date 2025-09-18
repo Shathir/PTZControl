@@ -65,6 +65,10 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.appcompat.resources)
 
+    // ExoPlayer for RTSP streaming
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
+    implementation("androidx.media3:media3-exoplayer-rtsp:1.2.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

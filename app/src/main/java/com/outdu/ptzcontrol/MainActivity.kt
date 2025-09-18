@@ -9,6 +9,12 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.outdu.ptzcontrol.services.OnvifDevice
+import com.outdu.ptzcontrol.ui.screens.DeviceDiscoveryScreen
 import com.outdu.ptzcontrol.ui.screens.MainScreen
 import com.outdu.ptzcontrol.ui.theme.PTZControlTheme
 
@@ -37,7 +43,22 @@ class MainActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContent {
             PTZControlTheme {
-                    MainScreen()
+                var selectedDevice by remember { mutableStateOf<OnvifDevice?>(null) }
+                
+                if (selectedDevice == null) {
+                    DeviceDiscoveryScreen(
+                        onDeviceSelected = { device ->
+                            selectedDevice = device
+                        }
+                    )
+                } else {
+                    MainScreen(
+                        selectedDevice = selectedDevice!!,
+                        onBackToDiscovery = {
+                            selectedDevice = null
+                        }
+                    )
+                }
             }
         }
     }

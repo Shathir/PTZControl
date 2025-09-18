@@ -1,6 +1,7 @@
 package com.outdu.ptzcontrol.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,14 +25,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.outdu.ptzcontrol.R
+import com.outdu.ptzcontrol.services.OnvifDevice
 import com.outdu.ptzcontrol.ui.components.CameraStreamLayout
+import com.outdu.ptzcontrol.ui.components.CameraStreamLayoutUltraLowLatency
+import com.outdu.ptzcontrol.ui.components.CameraStreamLayoutWithControls
 import com.outdu.ptzcontrol.ui.components.DPadLayout
 import com.outdu.ptzcontrol.ui.components.InfoCard
 import com.outdu.ptzcontrol.ui.components.PresetRow
 
 @Composable
 fun MainScreen(
+    selectedDevice: OnvifDevice,
+    onBackToDiscovery: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // State to trigger preset operations
@@ -44,19 +58,45 @@ fun MainScreen(
     {
 
         Box(
-            modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.1f)
                 .background(Color.Transparent),
         )
         {
-            InfoCard(onReloadPresets = {
-                reloadPresetsTrigger += 1
-            })
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Back button
+                Box(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .background(Color.Transparent)
+                        .clickable {
+                            onBackToDiscovery()
+                        }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.back), // Using reload icon as back arrow placeholder
+                        contentDescription = "Back to device selection",
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                
+                // Device info and InfoCard
+                Box(modifier = Modifier.weight(1f)) {
+                    InfoCard(onReloadPresets = {
+                        reloadPresetsTrigger += 1
+                    })
+                }
+            }
         }
 
         Box(
-            modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .height(60.dp)
                 .background(Color.Transparent)
         )
@@ -70,19 +110,21 @@ fun MainScreen(
 
         // Top half screen for showing stream
         Box(
-            modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.5f)
                 .background(Color.Transparent),
             contentAlignment = Alignment.Center
         )
         {
-            CameraStreamLayout()
+//            CameraStreamLayout()
+//            CameraStreamLayoutWithControls()
+            CameraStreamLayoutUltraLowLatency()
         }
 
         // Bottom half screen for showing controls
         Box(
-            modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .background(Color.Transparent),
