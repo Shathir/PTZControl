@@ -148,7 +148,9 @@ fun ErrorDialog(
 fun PresetRow(
     savePresetTrigger: Int = 0,
     deletePresetTrigger: Int = 0,
-    reloadPresetsTrigger: Int = 0
+    reloadPresetsTrigger: Int = 0,
+    onSelectedPresetChanged: ((String?) -> Unit)? = null,
+    deviceIpAddress: String? = null
 ){
 
     val TAG = "Preset Row"
@@ -156,7 +158,7 @@ fun PresetRow(
 
     var presets by remember { mutableStateOf<List<PTZClient.Preset>>(emptyList()) }
     var tempPresets by remember { mutableStateOf<List<PTZClient.Preset>>(emptyList()) }
-    val ptzClient = remember { PTZClient() }
+    val ptzClient = remember(deviceIpAddress) { PTZClient(deviceIpAddress) }
     
     // Dialog state
     var showNameDialog by remember { mutableStateOf(false) }
@@ -190,6 +192,14 @@ fun PresetRow(
 
     // Combined list of presets (saved + temporary)
     val allPresets = tempPresets
+
+    // Notify parent when presets are loaded and a default selection is made
+    LaunchedEffect(allPresets) {
+        if (allPresets.isNotEmpty() && isSelected < allPresets.size) {
+            val selectedPreset = allPresets[isSelected]
+            onSelectedPresetChanged?.invoke(selectedPreset.id.toString())
+        }
+    }
 
     // Function to save the currently selected preset
     fun saveSelectedPreset() {
@@ -338,6 +348,8 @@ fun PresetRow(
                         .clickable {
                             isSelected = index
                             Log.i(TAG, "Selected preset: ${preset.name} (ID: ${preset.id})")
+                            // Notify parent about selected preset
+                            onSelectedPresetChanged?.invoke(preset.id.toString())
                         },
                     contentAlignment = Alignment.Center
                 )

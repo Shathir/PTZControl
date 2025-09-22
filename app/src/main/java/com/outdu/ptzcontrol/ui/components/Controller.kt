@@ -299,11 +299,12 @@ fun ConfigurationControlPanel(
 @Composable
 fun DPadLayout(
     onSavePreset: (() -> Unit)? = null,
-    onDeletePreset: (() -> Unit)? = null
+    onDeletePreset: (() -> Unit)? = null,
+    deviceIpAddress: String? = null
 ) {
     val TAG = "DPad Layout"
     val coroutineScope = rememberCoroutineScope()
-    val ptzClient = remember { PTZClient() }
+    val ptzClient = remember(deviceIpAddress) { PTZClient(deviceIpAddress) }
 
     // Initialize PTZ client
     LaunchedEffect(Unit) {
@@ -341,19 +342,19 @@ fun DPadLayout(
         DPadController(
             onUp = { 
                 println("Up pressed")
-                handleMovement("up")
+                handleMovement("u")
             },
             onDown = { 
                 println("Down pressed")
-                handleMovement("down")
+                handleMovement("d")
             },
             onLeft = { 
                 println("Left pressed")
-                handleMovement("left")
+                handleMovement("l")
             },
             onRight = { 
                 println("Right pressed")
-                handleMovement("right")
+                handleMovement("r")
             }
         )
 

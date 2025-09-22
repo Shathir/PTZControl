@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,6 +47,9 @@ fun MainScreen(
     var savePresetTrigger by remember { mutableIntStateOf(0) }
     var deletePresetTrigger by remember { mutableIntStateOf(0) }
     var reloadPresetsTrigger by remember { mutableIntStateOf(0) }
+    
+    // State to track selected preset
+    var selectedPresetNumber by remember { mutableStateOf<String?>(null) }
 
     // Column to fill the complete screen in a vertical stack.
     Column(
@@ -87,9 +91,17 @@ fun MainScreen(
                 
                 // Device info and InfoCard
                 Box(modifier = Modifier.weight(1f)) {
-                    InfoCard(onReloadPresets = {
-                        reloadPresetsTrigger += 1
-                    })
+                    InfoCard(
+                        onReloadPresets = {
+                            reloadPresetsTrigger += 1
+                        }, 
+                        onGoToPreset = {
+                            println("Go to preset button pressed - Preset: $selectedPresetNumber")
+                            // This will be handled by InfoCard now
+                        },
+                        selectedPresetNumber = selectedPresetNumber,
+                        deviceIpAddress = selectedDevice.ipAddress
+                    )
                 }
             }
         }
@@ -104,7 +116,11 @@ fun MainScreen(
             PresetRow(
                 savePresetTrigger = savePresetTrigger,
                 deletePresetTrigger = deletePresetTrigger,
-                reloadPresetsTrigger = reloadPresetsTrigger
+                reloadPresetsTrigger = reloadPresetsTrigger,
+                onSelectedPresetChanged = { presetNumber ->
+                    selectedPresetNumber = presetNumber
+                },
+                deviceIpAddress = selectedDevice.ipAddress
             )
         }
 
@@ -137,7 +153,8 @@ fun MainScreen(
                 },
                 onDeletePreset = {
                     deletePresetTrigger += 1
-                }
+                },
+                deviceIpAddress = selectedDevice.ipAddress
             )
         }
 

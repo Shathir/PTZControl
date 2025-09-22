@@ -16,14 +16,20 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 
-class PTZClient {
+class PTZClient(private val deviceIpAddress: String? = null) {
     companion object {
         private const val TAG = "PTZClient"
         private const val TIMEOUT_MS = 10_000
+        private const val DEFAULT_PORT = "18080"
+        private const val FALLBACK_IP = "192.168.1.111" // Fallback for backward compatibility
     }
 
     private var httpClient: HttpClient? = null
-    private val baseUrl = "http://192.168.1.111:18080"
+    private val baseUrl: String
+        get() {
+            val ip = deviceIpAddress ?: FALLBACK_IP
+            return "http://$ip:$DEFAULT_PORT"
+        }
 
     @Serializable
     data class Preset(
@@ -69,9 +75,19 @@ class PTZClient {
         val message: String? = null
     )
 
+    @Serializable
+    data class GoToPresetRequest(
+        val presetNumber: String
+    )
+
+    @Serializable
+    data class GoToPresetResponse(
+        val message: String? = null
+    )
+
     fun init() {
         if (httpClient != null) {
-            Log.i(TAG, "HTTP client already initialized")
+            Log.i(TAG, "HTTP client already initialized for $baseUrl")
             return
         }
         
@@ -87,7 +103,7 @@ class PTZClient {
                 }
             }
         }
-        Log.i(TAG, "HTTP client initialized")
+        Log.i(TAG, "HTTP client initialized for device at $baseUrl")
     }
 
     fun close() {
@@ -213,6 +229,39 @@ class PTZClient {
         } catch (e: Exception) {
             Log.e(TAG, "Error controlling movement", e)
             false
+        }
+    }
+
+    suspend fun goToPreset(presetNumber: String): Pair<Boolean, String?> {
+        val client = httpClient ?: throw IllegalStateException("Client not initialized")
+
+        val url = "$baseUrl/gotopreset"
+        val request = GoToPresetRequest(presetNumber = presetNumber)
+
+        return try {
+            Log.d(TAG, "Going to preset: Number=$presetNumber")
+            
+            val response = client.post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+            val responseText = response.bodyAsText()
+            Log.d(TAG, "Go to preset response: $responseText")
+
+            val parsed = Json.decodeFromString<GoToPresetResponse>(responseText)
+            
+            if (response.status.value == 200) {
+                Log.i(TAG, "Successfully went to preset: $presetNumber")
+            } else {
+                Log.w(TAG, "Failed to go to preset: ${parsed.message}")
+            }
+
+            Pair(response.status.value == 200, parsed.message)
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error going to preset", e)
+            Pair(false, "Network error: ${e.message}")
         }
     }
 }
