@@ -86,7 +86,7 @@ fun DeviceDiscoveryScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "This may take up to 10 seconds",
+                            text = "This may take up to 5 seconds",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                             textAlign = TextAlign.Center

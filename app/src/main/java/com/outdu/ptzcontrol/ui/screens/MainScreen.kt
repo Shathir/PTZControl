@@ -18,10 +18,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.outdu.ptzcontrol.R
+import com.outdu.ptzcontrol.client.PTZClient
 import com.outdu.ptzcontrol.services.OnvifDevice
 import com.outdu.ptzcontrol.ui.components.CameraStreamLayout
 import com.outdu.ptzcontrol.ui.components.CameraStreamLayoutUltraLowLatency
@@ -36,6 +39,7 @@ import com.outdu.ptzcontrol.ui.components.CameraStreamLayoutWithControls
 import com.outdu.ptzcontrol.ui.components.DPadLayout
 import com.outdu.ptzcontrol.ui.components.InfoCard
 import com.outdu.ptzcontrol.ui.components.PresetRow
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen(
@@ -50,6 +54,29 @@ fun MainScreen(
     
     // State to track selected preset
     var selectedPresetNumber by remember { mutableStateOf<String?>(null) }
+    
+    // State to track calibration mode
+    var isCalibrationMode by remember { mutableStateOf(false) }
+    
+    // Coroutine scope and PTZ client for fetching initial mode
+    val coroutineScope = rememberCoroutineScope()
+    val ptzClient = remember(selectedDevice.ipAddress) { PTZClient(selectedDevice.ipAddress) }
+    
+    // Fetch initial mode when screen loads
+    LaunchedEffect(selectedDevice.ipAddress) {
+        coroutineScope.launch {
+            try {
+                ptzClient.init()
+                val currentMode = ptzClient.getCurrentMode()
+                currentMode?.let { mode ->
+                    isCalibrationMode = (mode == 1)
+                }
+            } catch (e: Exception) {
+                // If we can't fetch the mode, default to runtime (false)
+                isCalibrationMode = false
+            }
+        }
+    }
 
     // Column to fill the complete screen in a vertical stack.
     Column(
@@ -100,7 +127,11 @@ fun MainScreen(
                             // This will be handled by InfoCard now
                         },
                         selectedPresetNumber = selectedPresetNumber,
-                        deviceIpAddress = selectedDevice.ipAddress
+                        deviceIpAddress = selectedDevice.ipAddress,
+                        isCalibrationMode = isCalibrationMode,
+                        onModeChanged = { calibrationMode ->
+                            isCalibrationMode = calibrationMode
+                        }
                     )
                 }
             }
@@ -120,7 +151,8 @@ fun MainScreen(
                 onSelectedPresetChanged = { presetNumber ->
                     selectedPresetNumber = presetNumber
                 },
-                deviceIpAddress = selectedDevice.ipAddress
+                deviceIpAddress = selectedDevice.ipAddress,
+                isCalibrationMode = isCalibrationMode
             )
         }
 
@@ -135,7 +167,9 @@ fun MainScreen(
         {
 //            CameraStreamLayout()
 //            CameraStreamLayoutWithControls()
-            CameraStreamLayoutUltraLowLatency()
+            CameraStreamLayoutUltraLowLatency(
+                rtspUrl = "rtsp://" + selectedDevice.ipAddress +  ":8004/live1.sdp"
+            )
         }
 
         // Bottom half screen for showing controls
@@ -154,7 +188,8 @@ fun MainScreen(
                 onDeletePreset = {
                     deletePresetTrigger += 1
                 },
-                deviceIpAddress = selectedDevice.ipAddress
+                deviceIpAddress = selectedDevice.ipAddress,
+                isCalibrationMode = isCalibrationMode
             )
         }
 

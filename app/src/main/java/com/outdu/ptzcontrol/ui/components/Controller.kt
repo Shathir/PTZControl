@@ -51,7 +51,8 @@ fun DPadController(
     onUp: () -> Unit,
     onDown: () -> Unit,
     onLeft: () -> Unit,
-    onRight: () -> Unit
+    onRight: () -> Unit,
+    isCalibrationMode: Boolean = false
 ) {
     val sectorColor = Color(0xFFE8E8E8)
     val borderColor = Color(0xFFD0D0D0)
@@ -64,36 +65,38 @@ fun DPadController(
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    // Handle touch events
-                    detectTapGestures { offset ->
-                        val center = Offset(this.size.width / 2f, this.size.height / 2f)
-                        val dx = offset.x - center.x
-                        val dy = offset.y - center.y
-                        val distance = sqrt(dx * dx + dy * dy)
-                        val outerRadius = this.size.width / 2f
-                        val innerRadius = outerRadius * 0.4f
+                .pointerInput(isCalibrationMode) {
+                    // Handle touch events only if in calibration mode
+                    if (isCalibrationMode) {
+                        detectTapGestures { offset ->
+                            val center = Offset(this.size.width / 2f, this.size.height / 2f)
+                            val dx = offset.x - center.x
+                            val dy = offset.y - center.y
+                            val distance = sqrt(dx * dx + dy * dy)
+                            val outerRadius = this.size.width / 2f
+                            val innerRadius = outerRadius * 0.4f
 
-                        // Check if tap is within the ring area
-                        if (distance >= innerRadius && distance <= outerRadius) {
-                            val angle = atan2(dy, dx) * 180 / PI
-                            val normalizedAngle = if (angle < 0) angle + 360 else angle
+                            // Check if tap is within the ring area
+                            if (distance >= innerRadius && distance <= outerRadius) {
+                                val angle = atan2(dy, dx) * 180 / PI
+                                val normalizedAngle = if (angle < 0) angle + 360 else angle
 
-                            val gapDegrees = 8f
-                            val sectorDegrees = 90f - gapDegrees
-                            val halfSector = sectorDegrees / 2
+                                val gapDegrees = 8f
+                                val sectorDegrees = 90f - gapDegrees
+                                val halfSector = sectorDegrees / 2
 
-                            // Check which sector was tapped based on the new positions
-                            when {
-                                // Up sector: 270° ± halfSector
-                                normalizedAngle >= (270 - halfSector) && normalizedAngle <= (270 + halfSector) -> onUp()
-                                // Right sector: 0° ± halfSector (handle wraparound)
-                                normalizedAngle >= (360 - halfSector) || normalizedAngle <= halfSector -> onRight()
-                                // Down sector: 90° ± halfSector  
-                                normalizedAngle >= (90 - halfSector) && normalizedAngle <= (90 + halfSector) -> onDown()
-                                // Left sector: 180° ± halfSector
-                                normalizedAngle >= (180 - halfSector) && normalizedAngle <= (180 + halfSector) -> onLeft()
-                                // If in gap area, do nothing
+                                // Check which sector was tapped based on the new positions
+                                when {
+                                    // Up sector: 270° ± halfSector
+                                    normalizedAngle >= (270 - halfSector) && normalizedAngle <= (270 + halfSector) -> onUp()
+                                    // Right sector: 0° ± halfSector (handle wraparound)
+                                    normalizedAngle >= (360 - halfSector) || normalizedAngle <= halfSector -> onRight()
+                                    // Down sector: 90° ± halfSector  
+                                    normalizedAngle >= (90 - halfSector) && normalizedAngle <= (90 + halfSector) -> onDown()
+                                    // Left sector: 180° ± halfSector
+                                    normalizedAngle >= (180 - halfSector) && normalizedAngle <= (180 + halfSector) -> onLeft()
+                                    // If in gap area, do nothing
+                                }
                             }
                         }
                     }
@@ -145,11 +148,11 @@ fun DPadController(
                 }
 
                 // Draw filled sector
-                drawPath(path, color = Color.White)
+                drawPath(path, color = if (!isCalibrationMode) Color(0xFFF5F5F5) else Color.White)
                 // Draw border
                 drawPath(
                     path,
-                    color = borderColor,
+                    color = if (!isCalibrationMode) Color(0xFFE0E0E0) else borderColor,
                     style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
                 )
             }
@@ -166,11 +169,13 @@ fun DPadController(
         }
 
         // Overlay icons on each sector
+        val arrowTint = if (!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF666666)
+        
         // Up arrow
         Icon(
             imageVector = Icons.Default.KeyboardArrowUp,
             contentDescription = "Up",
-            tint = Color(0xFF666666),
+            tint = arrowTint,
             modifier = Modifier
                 .offset(y = (-size * 0.33f))
                 .size(32.dp)
@@ -180,7 +185,7 @@ fun DPadController(
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,
             contentDescription = "Down",
-            tint = Color(0xFF666666),
+            tint = arrowTint,
             modifier = Modifier
                 .offset(y = (size * 0.33f))
                 .size(32.dp)
@@ -190,7 +195,7 @@ fun DPadController(
         Icon(
             imageVector = Icons.Default.KeyboardArrowLeft,
             contentDescription = "Left",
-            tint = Color(0xFF666666),
+            tint = arrowTint,
             modifier = Modifier
                 .offset(x = (-size * 0.33f))
                 .size(32.dp)
@@ -200,7 +205,7 @@ fun DPadController(
         Icon(
             imageVector = Icons.Default.KeyboardArrowRight,
             contentDescription = "Right",
-            tint = Color(0xFF666666),
+            tint = arrowTint,
             modifier = Modifier
                 .offset(x = (size * 0.33f))
                 .size(32.dp)
@@ -230,7 +235,8 @@ fun DPadController(
 @Composable
 fun ConfigurationControlPanel(
     onSavePreset: (() -> Unit)? = null,
-    onDeletePreset: (() -> Unit)? = null
+    onDeletePreset: (() -> Unit)? = null,
+    isCalibrationMode: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -244,22 +250,24 @@ fun ConfigurationControlPanel(
                 .width(190.dp)
                 .height(48.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFF2A2A2A))
+                .background(if (!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF2A2A2A))
                 .border(
                     width = 1.dp,
-                    color = Color(0xFF2A2A2A),
+                    color = if (!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF2A2A2A),
                     shape = RoundedCornerShape(16.dp)
                 )
-                .clickable { 
-                    println("Save Preset button pressed")
-                    onSavePreset?.invoke()
+                .clickable(enabled = isCalibrationMode) { 
+                    if (isCalibrationMode) {
+                        println("Save Preset button pressed")
+                        onSavePreset?.invoke()
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Save Preset",
                 style = TextStyle(
-                    color = Color(0xFFFFFFFF),
+                    color = if (!isCalibrationMode) Color(0xFF999999) else Color(0xFFFFFFFF),
                     fontSize = 14.sp,
                     fontWeight = FontWeight(500),
                     fontFamily = FontFamily.SansSerif
@@ -273,20 +281,22 @@ fun ConfigurationControlPanel(
                 .clip(RoundedCornerShape(16.dp))
                 .border(
                     width = 1.dp,
-                    color = Color(0xFF737373),
+                    color = if (!isCalibrationMode) Color(0xFFE0E0E0) else Color(0xFF737373),
                     shape = RoundedCornerShape(16.dp)
                 )
-                .background(Color.White)
-                .clickable { 
-                    println("Delete button pressed")
-                    onDeletePreset?.invoke()
+                .background(if (!isCalibrationMode) Color(0xFFF5F5F5) else Color.White)
+                .clickable(enabled = isCalibrationMode) { 
+                    if (isCalibrationMode) {
+                        println("Delete button pressed")
+                        onDeletePreset?.invoke()
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Delete",
                 style = TextStyle(
-                    color = Color(0xFF737373),
+                    color = if (!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF737373),
                     fontSize = 14.sp,
                     fontWeight = FontWeight(500),
                     fontFamily = FontFamily.SansSerif
@@ -300,7 +310,8 @@ fun ConfigurationControlPanel(
 fun DPadLayout(
     onSavePreset: (() -> Unit)? = null,
     onDeletePreset: (() -> Unit)? = null,
-    deviceIpAddress: String? = null
+    deviceIpAddress: String? = null,
+    isCalibrationMode: Boolean = false
 ) {
     val TAG = "DPad Layout"
     val coroutineScope = rememberCoroutineScope()
@@ -318,18 +329,23 @@ fun DPadLayout(
 
     // Function to handle movement commands
     fun handleMovement(direction: String) {
-        coroutineScope.launch {
-            try {
-                Log.i(TAG, "$direction movement initiated")
-                val success = ptzClient.controlMovement(direction, 2)
-                if (success) {
-                    Log.i(TAG, "$direction movement completed successfully")
-                } else {
-                    Log.w(TAG, "$direction movement failed")
+        if (isCalibrationMode) {
+            coroutineScope.launch {
+                try {
+                    Log.i(TAG, "$direction movement initiated")
+                    val currentMode = if (isCalibrationMode) 1 else 0
+                    val success = ptzClient.controlMovement(direction, 2, currentMode)
+                    if (success) {
+                        Log.i(TAG, "$direction movement completed successfully")
+                    } else {
+                        Log.w(TAG, "$direction movement failed")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error during $direction movement", e)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error during $direction movement", e)
             }
+        } else {
+            Log.w(TAG, "Movement not allowed in runtime mode")
         }
     }
 
@@ -355,12 +371,14 @@ fun DPadLayout(
             onRight = { 
                 println("Right pressed")
                 handleMovement("r")
-            }
+            },
+            isCalibrationMode = isCalibrationMode
         )
 
         ConfigurationControlPanel(
             onSavePreset = onSavePreset,
-            onDeletePreset = onDeletePreset
+            onDeletePreset = onDeletePreset,
+            isCalibrationMode = isCalibrationMode
         )
     }
 }

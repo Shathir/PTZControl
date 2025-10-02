@@ -150,7 +150,8 @@ fun PresetRow(
     deletePresetTrigger: Int = 0,
     reloadPresetsTrigger: Int = 0,
     onSelectedPresetChanged: ((String?) -> Unit)? = null,
-    deviceIpAddress: String? = null
+    deviceIpAddress: String? = null,
+    isCalibrationMode: Boolean = false
 ){
 
     val TAG = "Preset Row"
@@ -264,7 +265,8 @@ fun PresetRow(
     LaunchedEffect(presetToSave) {
         presetToSave?.let { (id, name) ->
             try {
-                val success = ptzClient.setPreset(id, name)
+                val currentMode = if (isCalibrationMode) 1 else 0
+                val success = ptzClient.setPreset(id, name, currentMode)
                 if (success) {
                     Log.i(TAG, "Preset saved successfully: $name with ID: $id")
                     // Find and update the preset in tempPresets
@@ -296,7 +298,8 @@ fun PresetRow(
     LaunchedEffect(presetToDelete) {
         presetToDelete?.let { (presetNumber, presetName) ->
             try {
-                val (success, message) = ptzClient.deletePreset(presetNumber, presetName)
+                val currentMode = if (isCalibrationMode) 1 else 0
+                val (success, message) = ptzClient.deletePreset(presetNumber, presetName, currentMode)
                 if (success) {
                     Log.i(TAG, "Preset deleted successfully: $presetName")
                     // Remove from both lists
@@ -339,17 +342,23 @@ fun PresetRow(
                     modifier = Modifier.width(100.dp)
                         .height(60.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if(isSelected == index) Color.Black else Color.Transparent)
+                        .background(
+                            if(isSelected == index) Color.Black 
+                            else if(!isCalibrationMode) Color(0xFFF5F5F5) 
+                            else Color.Transparent
+                        )
                         .border(
                             width = 1.dp,
-                            color = Color(0xFF737373),
+                            color = if(!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF737373),
                             shape = RoundedCornerShape(16.dp)
                         )
-                        .clickable {
-                            isSelected = index
-                            Log.i(TAG, "Selected preset: ${preset.name} (ID: ${preset.id})")
-                            // Notify parent about selected preset
-                            onSelectedPresetChanged?.invoke(preset.id.toString())
+                        .clickable(enabled = isCalibrationMode) {
+                            if (isCalibrationMode) {
+                                isSelected = index
+                                Log.i(TAG, "Selected preset: ${preset.name} (ID: ${preset.id})")
+                                // Notify parent about selected preset
+                                onSelectedPresetChanged?.invoke(preset.id.toString())
+                            }
                         },
                     contentAlignment = Alignment.Center
                 )
@@ -357,7 +366,9 @@ fun PresetRow(
                     Text(
                         text = preset.name,
                         style = TextStyle(
-                            color = if(isSelected == index) Color.White else Color(0xFF2A2A2A),
+                            color = if(isSelected == index) Color.White 
+                                   else if(!isCalibrationMode) Color(0xFF999999)
+                                   else Color(0xFF2A2A2A),
                             fontSize = 14.sp,
                             fontWeight = FontWeight(400),
                             fontFamily = FontFamily.SansSerif
@@ -373,23 +384,25 @@ fun PresetRow(
 
             modifier = Modifier.size(48.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.Transparent)
+                .background(if(!isCalibrationMode) Color(0xFFF5F5F5) else Color.Transparent)
                 .border(
                     width = 1.dp,
-                    color = Color(0xFF737373),
+                    color = if(!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF737373),
                     shape = RoundedCornerShape(16.dp)
                 )
-                .clickable {
-                    Log.i(TAG, "Add button clicked")
-                    // Generate a temporary ID (negative to distinguish from real ones)
-                    val tempId = -(tempPresets.size + 1)
-                    val newPreset = PTZClient.Preset(
-                        id = tempId,
-                        name = "New Preset ${tempPresets.size - presets.size + 1}"
-                    )
-                    tempPresets = tempPresets + newPreset
-                    isSelected = tempPresets.size - 1 // Select the new preset
-                    Log.i(TAG, "Added temporary preset: ${newPreset.name}")
+                .clickable(enabled = isCalibrationMode) {
+                    if (isCalibrationMode) {
+                        Log.i(TAG, "Add button clicked")
+                        // Generate a temporary ID (negative to distinguish from real ones)
+                        val tempId = -(tempPresets.size + 1)
+                        val newPreset = PTZClient.Preset(
+                            id = tempId,
+                            name = "New Preset ${tempPresets.size - presets.size + 1}"
+                        )
+                        tempPresets = tempPresets + newPreset
+                        isSelected = tempPresets.size - 1 // Select the new preset
+                        Log.i(TAG, "Added temporary preset: ${newPreset.name}")
+                    }
                 },
             contentAlignment = Alignment.Center
         )
@@ -397,7 +410,7 @@ fun PresetRow(
             Icon(
                 painter = painterResource(R.drawable.plus),
                 contentDescription = "Add",
-                tint = Color.Black,
+                tint = if(!isCalibrationMode) Color(0xFF999999) else Color.Black,
                 modifier = Modifier.size(24.dp)
                     .align(Alignment.Center)
             )

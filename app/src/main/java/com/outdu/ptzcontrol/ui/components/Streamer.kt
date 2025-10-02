@@ -227,7 +227,7 @@ Note: May cause more frequent buffering but provides lowest possible latency
 @OptIn(UnstableApi::class)
 @Composable
 fun CameraStreamLayoutUltraLowLatency(
-    rtspUrl: String = "rtsp://192.168.1.162:8554/live/pano_stream_enc2"
+    rtspUrl: String = "rtsp://192.168.1.162:8004/live1.sdp"
 ) {
     val TAG = "RTSP Stream Ultra"
     val context = LocalContext.current

@@ -25,12 +25,23 @@ class PTZClient(private val deviceIpAddress: String? = null) {
     }
 
     private var httpClient: HttpClient? = null
+    private var currentMode: Int = 0 // Track current mode: 0 = Runtime, 1 = Calibration
     private val baseUrl: String
         get() {
             val ip = deviceIpAddress ?: FALLBACK_IP
             return "http://$ip:$DEFAULT_PORT"
         }
 
+//    private val baseUrl = "http://192.168.1.99:18080"
+
+    // Check if operation is allowed in current mode
+    private fun isOperationAllowedInCurrentMode(operation: String, mode: Int = currentMode): Boolean {
+        return when (mode) {
+            0 -> operation in listOf("changeMode", "fetchPresets") // Runtime mode - limited operations (viewing only)
+            1 -> true // Calibration mode - all operations allowed
+            else -> false
+        }
+    }
     @Serializable
     data class Preset(
         val id: Int,
@@ -85,6 +96,22 @@ class PTZClient(private val deviceIpAddress: String? = null) {
         val message: String? = null
     )
 
+    @Serializable
+    data class ChangeModeRequest(
+        val mode: Int
+    )
+
+    @Serializable
+    data class ChangeModeResponse(
+        val message: String? = null
+    )
+
+    @Serializable
+    data class GetModeResponse(
+        val mode: Int,
+        val message: String? = null
+    )
+
     fun init() {
         if (httpClient != null) {
             Log.i(TAG, "HTTP client already initialized for $baseUrl")
@@ -134,7 +161,14 @@ class PTZClient(private val deviceIpAddress: String? = null) {
         return result
     }
 
-    suspend fun setPreset(id: Int, name: String): Boolean {
+    suspend fun setPreset(id: Int, name: String, currentModeOverride: Int? = null): Boolean {
+        // Check if operation is allowed in current mode
+        val modeToCheck = currentModeOverride ?: currentMode
+        if (!isOperationAllowedInCurrentMode("setPreset", modeToCheck)) {
+            Log.w(TAG, "setPreset operation not allowed in runtime mode")
+            return false
+        }
+        
         val client = httpClient ?: throw IllegalStateException("Client not initialized")
 
         val url = "$baseUrl/setPreset"
@@ -167,7 +201,14 @@ class PTZClient(private val deviceIpAddress: String? = null) {
         }
     }
 
-    suspend fun deletePreset(presetNumber: Int, presetName: String): Pair<Boolean, String?> {
+    suspend fun deletePreset(presetNumber: Int, presetName: String, currentModeOverride: Int? = null): Pair<Boolean, String?> {
+        // Check if operation is allowed in current mode
+        val modeToCheck = currentModeOverride ?: currentMode
+        if (!isOperationAllowedInCurrentMode("deletePreset", modeToCheck)) {
+            Log.w(TAG, "deletePreset operation not allowed in runtime mode")
+            return Pair(false, "Operation not allowed in runtime mode")
+        }
+        
         val client = httpClient ?: throw IllegalStateException("Client not initialized")
 
         val url = "$baseUrl/deletePreset"
@@ -200,7 +241,14 @@ class PTZClient(private val deviceIpAddress: String? = null) {
         }
     }
 
-    suspend fun controlMovement(direction: String, time: Int = 2): Boolean {
+    suspend fun controlMovement(direction: String, time: Int = 2, currentModeOverride: Int? = null): Boolean {
+        // Check if operation is allowed in current mode
+        val modeToCheck = currentModeOverride ?: currentMode
+        if (!isOperationAllowedInCurrentMode("controlMovement", modeToCheck)) {
+            Log.w(TAG, "controlMovement operation not allowed in runtime mode")
+            return false
+        }
+        
         val client = httpClient ?: throw IllegalStateException("Client not initialized")
 
         val url = "$baseUrl/controlMovement"
@@ -232,7 +280,14 @@ class PTZClient(private val deviceIpAddress: String? = null) {
         }
     }
 
-    suspend fun goToPreset(presetNumber: String): Pair<Boolean, String?> {
+    suspend fun goToPreset(presetNumber: String, currentModeOverride: Int? = null): Pair<Boolean, String?> {
+        // Check if operation is allowed in current mode
+        val modeToCheck = currentModeOverride ?: currentMode
+        if (!isOperationAllowedInCurrentMode("goToPreset", modeToCheck)) {
+            Log.w(TAG, "goToPreset operation not allowed in runtime mode")
+            return Pair(false, "Operation not allowed in runtime mode")
+        }
+        
         val client = httpClient ?: throw IllegalStateException("Client not initialized")
 
         val url = "$baseUrl/gotopreset"
@@ -262,6 +317,68 @@ class PTZClient(private val deviceIpAddress: String? = null) {
         } catch (e: Exception) {
             Log.e(TAG, "Error going to preset", e)
             Pair(false, "Network error: ${e.message}")
+        }
+    }
+
+    suspend fun getCurrentMode(): Int? {
+        val client = httpClient ?: throw IllegalStateException("Client not initialized")
+
+        val url = "$baseUrl/getMode"
+
+        return try {
+            Log.d(TAG, "Fetching current mode")
+
+            val response = client.get(url)
+            val responseText = response.bodyAsText()
+            Log.d(TAG, "Get mode response: $responseText")
+
+            if (response.status.value == 200) {
+                val parsed = Json.decodeFromString<GetModeResponse>(responseText)
+                currentMode = parsed.mode // Update local tracking
+                Log.i(TAG, "Current mode: ${parsed.mode}")
+                parsed.mode
+            } else {
+                Log.w(TAG, "Failed to get current mode")
+                null
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting current mode", e)
+            null
+        }
+    }
+
+    suspend fun changeMode(mode: Int): Boolean {
+        val client = httpClient ?: throw IllegalStateException("Client not initialized")
+
+        val url = "$baseUrl/changeMode"
+        val request = ChangeModeRequest(mode = mode)
+
+        return try {
+            Log.d(TAG, "Changing mode: $mode")
+
+            val response = client.post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+
+            val responseText = response.bodyAsText()
+            Log.d(TAG, "Change mode response: $responseText")
+
+            if (response.status.value == 200) {
+                // Update local mode tracking
+                currentMode = mode
+                Log.i(TAG, "Successfully changed to mode: $mode")
+                true
+            } else {
+                val parsed = Json.decodeFromString<ChangeModeResponse>(responseText)
+                Log.w(TAG, "Failed to change mode: ${parsed.message}")
+                false
+            }
+
+        }    catch (e: Exception) {
+            Log.e(TAG, "Error changing mode", e)
+            false
         }
     }
 }
