@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.sp
 import com.outdu.ptzcontrol.R
 import com.outdu.ptzcontrol.client.PTZClient
 import kotlinx.coroutines.selects.select
+import com.outdu.ptzcontrol.utils.rememberDeviceType
+import com.outdu.ptzcontrol.utils.DeviceType
 
 
 @Composable
@@ -153,6 +155,16 @@ fun PresetRow(
     deviceIpAddress: String? = null,
     isCalibrationMode: Boolean = false
 ){
+    val deviceType = rememberDeviceType()
+    
+    // Mobile-optimized sizing
+    val presetWidth = if (deviceType == DeviceType.TABLET) 100.dp else 75.dp
+    val presetHeight = if (deviceType == DeviceType.TABLET) 60.dp else 45.dp
+    val presetFontSize = if (deviceType == DeviceType.TABLET) 14.sp else 12.sp
+    val addButtonSize = if (deviceType == DeviceType.TABLET) 48.dp else 36.dp
+    val addIconSize = if (deviceType == DeviceType.TABLET) 24.dp else 18.dp
+    val spacing = if (deviceType == DeviceType.TABLET) 8.dp else 6.dp
+    val rowSpacing = if (deviceType == DeviceType.TABLET) 4.dp else 3.dp
 
     val TAG = "Preset Row"
     var isSelected by remember { mutableStateOf(0) }
@@ -326,21 +338,21 @@ fun PresetRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(rowSpacing)
     )
     {
 
         LazyRow(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing),
             verticalAlignment = Alignment.CenterVertically
         )
         {
             items(allPresets.size) { index ->
                 val preset = allPresets[index]
                 Box(
-                    modifier = Modifier.width(100.dp)
-                        .height(60.dp)
+                    modifier = Modifier.width(presetWidth)
+                        .height(presetHeight)
                         .clip(RoundedCornerShape(16.dp))
                         .background(
                             if(isSelected == index) Color.Black 
@@ -369,7 +381,7 @@ fun PresetRow(
                             color = if(isSelected == index) Color.White 
                                    else if(!isCalibrationMode) Color(0xFF999999)
                                    else Color(0xFF2A2A2A),
-                            fontSize = 14.sp,
+                            fontSize = presetFontSize,
                             fontWeight = FontWeight(400),
                             fontFamily = FontFamily.SansSerif
                         ),
@@ -381,8 +393,7 @@ fun PresetRow(
         }
 
         Box(
-
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier.size(addButtonSize)
                 .clip(RoundedCornerShape(16.dp))
                 .background(if(!isCalibrationMode) Color(0xFFF5F5F5) else Color.Transparent)
                 .border(
@@ -411,7 +422,7 @@ fun PresetRow(
                 painter = painterResource(R.drawable.plus),
                 contentDescription = "Add",
                 tint = if(!isCalibrationMode) Color(0xFF999999) else Color.Black,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(addIconSize)
                     .align(Alignment.Center)
             )
         }

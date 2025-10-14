@@ -40,6 +40,8 @@ import com.outdu.ptzcontrol.ui.components.DPadLayout
 import com.outdu.ptzcontrol.ui.components.InfoCard
 import com.outdu.ptzcontrol.ui.components.PresetRow
 import kotlinx.coroutines.launch
+import com.outdu.ptzcontrol.utils.rememberDeviceType
+import com.outdu.ptzcontrol.utils.DeviceType
 
 @Composable
 fun MainScreen(
@@ -47,6 +49,16 @@ fun MainScreen(
     onBackToDiscovery: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val deviceType = rememberDeviceType()
+    
+    // Mobile-optimized sizing
+    val headerHeight = if (deviceType == DeviceType.TABLET) 0.1f else 0.08f
+    val presetRowHeight = if (deviceType == DeviceType.TABLET) 60.dp else 45.dp
+    val spacing = if (deviceType == DeviceType.TABLET) 32.dp else 24.dp
+    val backButtonSize = if (deviceType == DeviceType.TABLET) 32.dp else 24.dp
+    val backButtonPadding = if (deviceType == DeviceType.TABLET) 8.dp else 6.dp
+    val columnPadding = if (deviceType == DeviceType.TABLET) 24.dp else 18.dp
+    
     // State to trigger preset operations
     var savePresetTrigger by remember { mutableIntStateOf(0) }
     var deletePresetTrigger by remember { mutableIntStateOf(0) }
@@ -82,28 +94,28 @@ fun MainScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(columnPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
+        verticalArrangement = Arrangement.spacedBy(spacing)
     )
     {
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.1f)
+                .fillMaxHeight(headerHeight)
                 .background(Color.Transparent),
         )
         {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Back button
                 Box(
                     modifier = Modifier
-                        .padding(start = 8.dp)
+                        .padding(start = backButtonPadding)
                         .background(Color.Transparent)
                         .clickable {
                             onBackToDiscovery()
@@ -112,7 +124,7 @@ fun MainScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.back), // Using reload icon as back arrow placeholder
                         contentDescription = "Back to device selection",
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(backButtonSize)
                     )
                 }
                 
@@ -140,7 +152,7 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
+                .height(presetRowHeight)
                 .background(Color.Transparent)
         )
         {
@@ -160,7 +172,7 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.5f)
+                .fillMaxHeight(if (deviceType == DeviceType.TABLET) 0.5f else 0.45f)
                 .background(Color.Transparent),
             contentAlignment = Alignment.Center
         )
@@ -176,7 +188,7 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
+                .fillMaxHeight(if (deviceType == DeviceType.TABLET) 1f else 1f)
                 .background(Color.Transparent),
             contentAlignment = Alignment.Center
         )

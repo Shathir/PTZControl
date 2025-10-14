@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import com.outdu.ptzcontrol.R
 import com.outdu.ptzcontrol.client.PTZClient
 import kotlinx.coroutines.launch
+import com.outdu.ptzcontrol.utils.rememberDeviceType
+import com.outdu.ptzcontrol.utils.DeviceType
 
 @Composable
 fun InfoCard(
@@ -43,6 +45,16 @@ fun InfoCard(
     isCalibrationMode: Boolean = false, // Receive mode state from parent
     onModeChanged: ((Boolean) -> Unit)? = null // Callback to notify parent about mode changes
 ) {
+    val deviceType = rememberDeviceType()
+    
+    // Mobile-optimized sizing
+    val titleFontSize = if (deviceType == DeviceType.TABLET) 24.sp else 18.sp
+    val modeFontSize = if (deviceType == DeviceType.TABLET) 14.sp else 12.sp
+    val buttonSize = if (deviceType == DeviceType.TABLET) 40.dp else 30.dp
+    val iconSize = if (deviceType == DeviceType.TABLET) 36.dp else 27.dp
+    val playIconSize = if (deviceType == DeviceType.TABLET) 16.dp else 12.dp
+    val spacing = if (deviceType == DeviceType.TABLET) 12.dp else 9.dp
+    val modeSpacing = if (deviceType == DeviceType.TABLET) 8.dp else 6.dp
     val TAG = "InfoCard"
     val coroutineScope = rememberCoroutineScope()
     val ptzClient = remember(deviceIpAddress) { PTZClient(deviceIpAddress) }
@@ -57,7 +69,7 @@ fun InfoCard(
             text = "PTZ Control",
             style = TextStyle(
                 color = Color(0xFF2A2A2A),
-                fontSize = 24.sp,
+                fontSize = titleFontSize,
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight(500)
             )
@@ -66,19 +78,19 @@ fun InfoCard(
         Row(
             modifier = Modifier,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(spacing)
         )
         {
             // Mode toggle section
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(modeSpacing)
             ) {
                 Text(
                     text = if (isCalibrationMode) "Calibration" else "Runtime",
                     style = TextStyle(
                         color = if (isCalibrationMode) Color(0xFF4CAF50) else Color(0xFFFF6B35),
-                        fontSize = 14.sp,
+                        fontSize = modeFontSize,
                         fontFamily = FontFamily.SansSerif,
                         fontWeight = FontWeight(500)
                     )
@@ -118,7 +130,7 @@ fun InfoCard(
             }
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(buttonSize)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Black)
                     .clickable {
@@ -132,13 +144,13 @@ fun InfoCard(
                     painter = painterResource(id = R.drawable.reload),
                     contentDescription = "Reload Button",
                     tint = Color.White,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(iconSize)
                 )
             }
 
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(buttonSize)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Black)
                     .clickable {
@@ -170,7 +182,7 @@ fun InfoCard(
                     painter = painterResource(id = R.drawable.play),
                     contentDescription = "Play Button",
                     tint = Color.White,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(playIconSize)
                 )
             }
         }

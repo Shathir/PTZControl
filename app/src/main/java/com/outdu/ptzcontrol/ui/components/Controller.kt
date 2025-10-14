@@ -44,6 +44,8 @@ import androidx.compose.runtime.remember
 import com.outdu.ptzcontrol.client.PTZClient
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import com.outdu.ptzcontrol.utils.rememberDeviceType
+import com.outdu.ptzcontrol.utils.DeviceType
 
 @Composable
 fun DPadController(
@@ -54,11 +56,13 @@ fun DPadController(
     onRight: () -> Unit,
     isCalibrationMode: Boolean = false
 ) {
+    val deviceType = rememberDeviceType()
+    val scaledSize = if (deviceType == DeviceType.TABLET) size else size * 0.75f
     val sectorColor = Color(0xFFE8E8E8)
     val borderColor = Color(0xFFD0D0D0)
 
     Box(
-        modifier = Modifier.size(size),
+        modifier = Modifier.size(scaledSize),
         contentAlignment = Alignment.Center
     ) {
         // Draw the circular D-Pad with arc sectors
@@ -102,7 +106,7 @@ fun DPadController(
                     }
                 }
         ) {
-            val canvasSize = size.toPx()
+            val canvasSize = scaledSize.toPx()
             val centerX = canvasSize / 2
             val centerY = canvasSize / 2
             val outerRadius = canvasSize / 2
@@ -177,8 +181,8 @@ fun DPadController(
             contentDescription = "Up",
             tint = arrowTint,
             modifier = Modifier
-                .offset(y = (-size * 0.33f))
-                .size(32.dp)
+                .offset(y = (-scaledSize * 0.33f))
+                .size(if (deviceType == DeviceType.TABLET) 32.dp else 24.dp)
         )
 
         // Down arrow
@@ -187,8 +191,8 @@ fun DPadController(
             contentDescription = "Down",
             tint = arrowTint,
             modifier = Modifier
-                .offset(y = (size * 0.33f))
-                .size(32.dp)
+                .offset(y = (scaledSize * 0.33f))
+                .size(if (deviceType == DeviceType.TABLET) 32.dp else 24.dp)
         )
 
         // Left arrow
@@ -197,8 +201,8 @@ fun DPadController(
             contentDescription = "Left",
             tint = arrowTint,
             modifier = Modifier
-                .offset(x = (-size * 0.33f))
-                .size(32.dp)
+                .offset(x = (-scaledSize * 0.33f))
+                .size(if (deviceType == DeviceType.TABLET) 32.dp else 24.dp)
         )
 
         // Right arrow
@@ -207,14 +211,14 @@ fun DPadController(
             contentDescription = "Right",
             tint = arrowTint,
             modifier = Modifier
-                .offset(x = (size * 0.33f))
-                .size(32.dp)
+                .offset(x = (scaledSize * 0.33f))
+                .size(if (deviceType == DeviceType.TABLET) 32.dp else 24.dp)
         )
 
         // Center circle with text
         Box(
             modifier = Modifier
-                .size(size * 0.3f)
+                .size(scaledSize * 0.3f)
                 .clip(CircleShape)
                 .background(Color.White),
             contentAlignment = Alignment.Center
@@ -222,7 +226,7 @@ fun DPadController(
             Text(
                 text = "Pan/ Tilt",
                 style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 14.sp,
+                    fontSize = if (deviceType == DeviceType.TABLET) 14.sp else 12.sp,
                     fontWeight = FontWeight.Medium
                 ),
                 textAlign = TextAlign.Center,
@@ -238,22 +242,29 @@ fun ConfigurationControlPanel(
     onDeletePreset: (() -> Unit)? = null,
     isCalibrationMode: Boolean = false
 ) {
+    val deviceType = rememberDeviceType()
+    val padding = if (deviceType == DeviceType.TABLET) 48.dp else 36.dp
+    val spacing = if (deviceType == DeviceType.TABLET) 16.dp else 12.dp
+    val buttonHeight = if (deviceType == DeviceType.TABLET) 48.dp else 36.dp
+    val saveButtonWidth = if (deviceType == DeviceType.TABLET) 190.dp else 142.dp
+    val deleteButtonWidth = if (deviceType == DeviceType.TABLET) 170.dp else 127.dp
+    val fontSize = if (deviceType == DeviceType.TABLET) 14.sp else 12.sp
     Row(
         modifier = Modifier
             .fillMaxHeight()
-            .padding(48.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(padding),
+        horizontalArrangement = Arrangement.spacedBy(spacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .width(190.dp)
-                .height(48.dp)
+                .width(saveButtonWidth)
+                .height(buttonHeight)
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF2A2A2A))
+                .background(if (!isCalibrationMode) Color(0xFFE0E0E0) else Color(0xFF2A2A2A))
                 .border(
                     width = 1.dp,
-                    color = if (!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF2A2A2A),
+                    color = if (!isCalibrationMode) Color(0xFFB0B0B0) else Color(0xFF2A2A2A),
                     shape = RoundedCornerShape(16.dp)
                 )
                 .clickable(enabled = isCalibrationMode) { 
@@ -267,8 +278,8 @@ fun ConfigurationControlPanel(
             Text(
                 text = "Save Preset",
                 style = TextStyle(
-                    color = if (!isCalibrationMode) Color(0xFF999999) else Color(0xFFFFFFFF),
-                    fontSize = 14.sp,
+                    color = if (!isCalibrationMode) Color(0xFF666666) else Color(0xFFFFFFFF),
+                    fontSize = fontSize,
                     fontWeight = FontWeight(500),
                     fontFamily = FontFamily.SansSerif
                 )
@@ -276,15 +287,15 @@ fun ConfigurationControlPanel(
         }
         Box(
             modifier = Modifier
-                .width(170.dp)
-                .height(48.dp)
+                .width(deleteButtonWidth)
+                .height(buttonHeight)
                 .clip(RoundedCornerShape(16.dp))
                 .border(
                     width = 1.dp,
-                    color = if (!isCalibrationMode) Color(0xFFE0E0E0) else Color(0xFF737373),
+                    color = if (!isCalibrationMode) Color(0xFFB0B0B0) else Color(0xFF737373),
                     shape = RoundedCornerShape(16.dp)
                 )
-                .background(if (!isCalibrationMode) Color(0xFFF5F5F5) else Color.White)
+                .background(if (!isCalibrationMode) Color(0xFFE8E8E8) else Color.White)
                 .clickable(enabled = isCalibrationMode) { 
                     if (isCalibrationMode) {
                         println("Delete button pressed")
@@ -296,8 +307,8 @@ fun ConfigurationControlPanel(
             Text(
                 text = "Delete",
                 style = TextStyle(
-                    color = if (!isCalibrationMode) Color(0xFFCCCCCC) else Color(0xFF737373),
-                    fontSize = 14.sp,
+                    color = if (!isCalibrationMode) Color(0xFF666666) else Color(0xFF737373),
+                    fontSize = fontSize,
                     fontWeight = FontWeight(500),
                     fontFamily = FontFamily.SansSerif
                 )
@@ -356,19 +367,19 @@ fun DPadLayout(
     )
     {
         DPadController(
-            onUp = { 
+            onUp = {
                 println("Up pressed")
                 handleMovement("u")
             },
-            onDown = { 
+            onDown = {
                 println("Down pressed")
                 handleMovement("d")
             },
-            onLeft = { 
+            onLeft = {
                 println("Left pressed")
                 handleMovement("l")
             },
-            onRight = { 
+            onRight = {
                 println("Right pressed")
                 handleMovement("r")
             },
